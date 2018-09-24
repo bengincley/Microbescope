@@ -8,11 +8,11 @@ import numpy as np
 from skimage.io import imread
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-
+# Load json of manually annotated cells from Labelme
 file = 'Escherichia.coli/Escherichia.coli_0001.json'
 with open(file) as f:
     data = json.load(f)
-
+# Store coordinates of annotated cells vs annotated background
 microbes = []
 not_microbes = []
 for i in data['shapes']:
@@ -23,6 +23,7 @@ for i in data['shapes']:
 
 
 def extract_patches(image, coordinates, size):
+    """ Returns image patches centered on input coordinates"""
     patch = []
     for i in range(len(coordinates)):
         new_patch = image[int((coordinates[i][1] - size / 2)):int((coordinates[i][1] + size / 2)),
@@ -32,9 +33,11 @@ def extract_patches(image, coordinates, size):
     return patch
 
 
+# Read in image from json file and extract patches based on annotated json coordinates
 image = imread('Escherichia.coli/'+data['imagePath'])
 microbes_patches = extract_patches(image, microbes, 30)
 not_microbes_patches = extract_patches(image, not_microbes, 30)
+# Create a training and testing dataset. 1s correspond to microbe class, 0s coorrespond to non-microbe patches
 X = np.concatenate((microbes_patches, not_microbes_patches))
 y = np.concatenate((np.ones(len(microbes_patches), dtype=int), np.zeros(len(not_microbes_patches), dtype=int)))
 x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.33)
@@ -47,7 +50,6 @@ epochs = 10
 
 # input image dimensions
 img_x, img_y = 30, 30
-
 
 # reshape the data into a 4D tensor - (sample_number, x_img_size, y_img_size, num_channels)
 # because the MNIST is greyscale, we only have a single channel - RGB colour images would have 3
@@ -108,10 +110,10 @@ plt.xlabel('Epochs')
 plt.ylabel('Accuracy')
 plt.show()
 
-from main import patch as auto_patches
-auto_patches = np.asarray(auto_patches)
-auto_patches = auto_patches.reshape(auto_patches.shape[0], img_x, img_y, 3)
-auto_patches = auto_patches.astype('float32')
-auto_patches /= 255
-
-results = model.predict(auto_patches)
+# serialize model to JSON
+model_json = model.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+model.save_weights("model.h5")
+print("Saved model to disk")
