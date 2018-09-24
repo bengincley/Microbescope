@@ -1,14 +1,11 @@
+import numpy as np
+import keras
+from keras.models import model_from_json
 from skimage.io import imread
-from skimage.filters import threshold_otsu, gaussian, rank
-from skimage.color import rgb2gray, label2rgb
-from skimage.measure import label
-from skimage.morphology import erosion, disk, watershed
+from skimage.filters import threshold_otsu, gaussian
+from skimage.color import rgb2gray
 from skimage.feature import peak_local_max
 from skimage.util import invert
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy import ndimage as ndi
-from skimage.util import img_as_ubyte
 
 
 def import_image(input_file):
@@ -16,8 +13,12 @@ def import_image(input_file):
     return image
 
 
-def binary_threshold(image):
+def pre_process(image):
+    """ Preforms high-level pre-processing on image
+    using difference of Gaussian filter and threshold
+    """
     new_img = rgb2gray(image)
+    new_img = invert(new_img)
     gauss_img = gaussian(new_img, sigma=0.5) - gaussian(new_img, sigma=20)
     thresh = threshold_otsu(gauss_img)
     super_thresh = gauss_img < thresh
@@ -25,22 +26,45 @@ def binary_threshold(image):
     return gauss_img
 
 
-def coordinates(binary):
-    label_image = label(binary)
-    image_label_overlay = label2rgb(label_image, image=binary)
-    return image_label_overlay, label_image
+def coordinates(image):
+    """ Returns coordinates of local maxima in imag
+    """
+    local_maximums = peak_local_max(image, min_distance=9, threshold_abs=0.2, indices=True, exclude_border=30)
+    return local_maximums
 
 
-input_file = 'Escherichia.coli/Escherichia.coli_0001.tif'
-image = import_image(input_file)
-image = rgb2gray(image)
-image = invert(image)
-gauss_image = binary_threshold(image)
-#distance = ndi.distance_transform_edt(image)
-local_maxi = peak_local_max(image, min_distance=9, threshold_abs=0.2, indices=False)
-markers = ndi.label(local_maxi)[0]
-overlay = label2rgb(markers, image=image)
+def extract_patches(image, coordinates, size):
+    """ Returns image patches centered coordinates input into function
+    """
+    patch = []
+    for i in range(len(coordinates)):
+        patch.append(image[int((coordinates[i, 0] - size / 2)):int((coordinates[i, 0] + size / 2)),
+                     int((coordinates[i, 1] - size / 2)):int((coordinates[i, 1] + size / 2))])
+    return patch
 
-plt.imshow(gauss_image, cmap=plt.cm.nipy_spectral, interpolation='nearest')
-plt.show()
-#print(len(local_maxi))
+
+# Import test image and process into patches
+input_img = 'Escherichia.coli/Escherichia.coli_0002.tif'
+orig_image = import_image(input_img)
+gauss_image = pre_process(orig_image)
+local_maxi = coordinates(gauss_image)
+patch = extract_patches(orig_image, local_maxi, 30)
+# Reformat patches into form acceptable to model
+img_x, img_y = 30, 30
+patch = np.asarray(patch)
+patch = patch.reshape(patch.shape[0], img_x, img_y, 3)
+patch = patch.astype('float32')
+patch /= 255
+# load json and create model
+json_file = open('model.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+# load weights into new model
+loaded_model.load_weights("model.h5")
+loaded_model.compile(loss=keras.losses.categorical_crossentropy,
+              optimizer=keras.optimizers.Adam(),
+              metrics=['accuracy'])
+# Test trained model using automatically extracted local-max patches
+results = loaded_model.predict(patch)
+print(results[0])
