@@ -15,10 +15,10 @@ GPIO.output(LED, False)
 
 
 with picamera.PiCamera() as camera:
-    camera.resolution = (1920, 1080)
+    camera.resolution = (1080, 1920)
     camera.awb_mode = 'off'
     camera.awb_gains = (1, 1)
-    output = np.empty((1920, 1080, 3), dtype=np.uint8)
+    output = np.empty((1080, 1920, 3), dtype=np.uint8)
     camera.start_preview()
     sleep(3)
     GPIO.output(LED, True)
@@ -28,5 +28,7 @@ with picamera.PiCamera() as camera:
     GPIO.output(LED, False)
     sleep(3)
     camera.stop_preview()
+    now = datetime.datetime.now()
+    now_string = now.strftime("%Y-%m-%d %H:%M:%S:%f")
     im = Image.fromarray(output)
-    im.save("/home/pi/Desktop/image1.jpeg")
+    im.save("/home/pi/Desktop/%s.jpeg" % now_string)
