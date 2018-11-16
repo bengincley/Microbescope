@@ -11,6 +11,7 @@ VALVE = 2
 GPIO.setmode(GPIO.BCM)   # Broadcom pin-numbering scheme.
 GPIO.setwarnings(False)
 GPIO.setup(LED, GPIO.OUT)
+GPIO.setup(VALVE, GPIO.OUT)
 GPIO.output(LED, False)
 GPIO.output(VALVE, False)
 
@@ -28,10 +29,13 @@ def im_capture():
         output = np.empty((2464, 3296, 3), dtype=np.uint8)
         camera.capture(output, 'rgb')
         output = output[:, :3280, :] # strip off uninitialized pixels
+    GPIO.output(LED, False)
     return output
 
 
 class Sample(sample_frequency, logfile):
+    valve_time = 0.5
+
     def __init__(self, sample_frequency, logfile):
         self.microbe_count = 0
         self.start_time = datetime.datetime.now()
