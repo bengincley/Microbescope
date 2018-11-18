@@ -1,13 +1,12 @@
 from picamera import PiCamera
-import time
+import time, datetime
 import RPi.GPIO as GPIO
-import datetime
 import numpy as np
-import scipy as sp
+#import scipy as sp
 from PIL import Image
 
 # Pin Setup:
-LED = 1 #Pin#
+LED = 2 #Pin#
 GPIO.setmode(GPIO.BCM)   # Broadcom pin-numbering scheme.
 GPIO.setwarnings(False)
 GPIO.setup(LED, GPIO.OUT)
@@ -31,4 +30,4 @@ with picamera.PiCamera() as camera:
     now = datetime.datetime.now()
     now_string = now.strftime("%Y-%m-%d %H:%M:%S:%f")
     im = Image.fromarray(output)
-    im.save("/home/pi/Desktop/%s.jpeg" % now_string)
+    im.save("/home/pi/Desktop/Img%s.jpeg" % now_string[0:19])
