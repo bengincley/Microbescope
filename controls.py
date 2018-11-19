@@ -32,23 +32,11 @@ def im_capture():
         time.sleep(1)
         output = np.empty((1232, 1664, 3), dtype=np.uint8) 
         camera.capture(output, 'rgb')
-<<<<<<< HEAD
     return np.mean(output, axis=2)
 
 
 class Sample:
     def __init__(self, sample_frequency=1, save_path='/', save_images=False):
-=======
-        output = output[:, :3280, :] # strip off uninitialized pixels
-    GPIO.output(LED, False)
-    return output
-
-
-class Sample(sample_frequency, logfile):
-    valve_time = 0.5
-
-    def __init__(self, sample_frequency, logfile):
->>>>>>> b847346c16ff5467f023204e5bf2260c8a668280
         self.microbe_count = 0
         self.start_time = datetime.datetime.now()
         self.frames = 0
