@@ -45,7 +45,8 @@ def extract_patches(image, coordinates, size):
     return np.asarray(patch), np.asarray(xy)
 
 
-def sklearn_predict(patches, modelfile):
+def sklearn_predict(patches):
+    modelfile = 'Logistic_model.pkl'
     with open(modelfile, 'rb') as file:
         model = pickle.load(file)
     patch = patches.reshape((len(patches), -1))
@@ -54,9 +55,10 @@ def sklearn_predict(patches, modelfile):
 
 
 def process_image(image, size):
-    img = import_image(image)
-    objects = object_detector(img)
-    patches, coordinates = extract_patches(img, objects, size)
-    predictions = sklearn_predict(patches, modelfile)
+    objects = object_detector(image)
+    patches, coordinates = extract_patches(image, objects, size)
+    predictions = sklearn_predict(patches)
+    number_microbes = len(predictions[:, 1]>0.5)
+    return number_microbes
 
 

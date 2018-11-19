@@ -1,16 +1,19 @@
 from picamera import PiCamera
 import time
 import RPi.GPIO as GPIO
-from MicrobeScope import image_processing
+import image_processing
 import datetime
 import numpy as np
+from scipy.misc import imsave
 
 # Pin Setup:
-LED = 1 #Pin#
-VALVE = 2
+LED = 1  # LED pin number
+VALVE = 2  # Valve pin number
+valve_time = 2
 GPIO.setmode(GPIO.BCM)   # Broadcom pin-numbering scheme.
 GPIO.setwarnings(False)
 GPIO.setup(LED, GPIO.OUT)
+GPIO.setup(VALVE, GPIO.OUT)
 GPIO.output(LED, False)
 GPIO.output(VALVE, False)
 
@@ -18,37 +21,39 @@ GPIO.output(VALVE, False)
 def im_capture():
     GPIO.output(LED, True)
     GPIO.output(VALVE, True)
-    time.sleep(Sample.valve_time)
+    time.sleep(valve_time)
     GPIO.output(VALVE, False)
-    time.sleep(Sample.valve_time)
-    with picamera.PiCamera() as camera:
-        camera.resolution = (3280, 2464)
+    time.sleep(valve_time)
+    with PiCamera() as camera:
+        camera.resolution = (1664, 1232) 
         camera.awb_mode = 'off'
         camera.awb_gains = (1, 1)
-        output = np.empty((2464, 3296, 3), dtype=np.uint8)
+        camera.framerate = 24
+        time.sleep(1)
+        output = np.empty((1232, 1664, 3), dtype=np.uint8) 
         camera.capture(output, 'rgb')
-        output = output[:, :3280, :] # strip off uninitialized pixels
-    return output
+    return np.mean(output, axis=2)
 
 
-class Sample(sample_frequency, logfile):
-    def __init__(self, sample_frequency, logfile):
+class Sample:
+    def __init__(self, sample_frequency=1, save_path='/', save_images=False):
         self.microbe_count = 0
         self.start_time = datetime.datetime.now()
-        self.pics = []
         self.frames = 0
-        self.sample_frequency = sample_frequency
-        self.logfile = logfile
+        self.sample_time = sample_frequency
+        self.save_path = save_path
+        self.save = save_images
 
     def add_pic(self):
         new_pic = im_capture()
-        self.pics.append(new_pic)
         self.frames += 1
-        self.microbe_count += image_processing(new_pic)
+        self.microbe_count += image_processing.process_image(new_pic, size=30)
+        if self.save == True:
+            imsave('%s%s.png' % (self.save_path, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")), new_pic)
 
     def log(self):
-        filename = self.logfile
-        file_object = open('%s.txt' % filename, 'a')
+        filename = '%slogfile.txt' % self.save_path
+        file_object = open(filename, 'a')
         now = datetime.datetime.now()
         now_string = now.strftime("%Y-%m-%d %H:%M:%S:%f")
         file_object.write(now_string)
