@@ -1,5 +1,6 @@
 from guizero import App, Text, TextBox, PushButton, CheckBox, ButtonGroup
 from time import sleep
+import datetime
 #import controls
 
 
@@ -26,8 +27,22 @@ def calibrate():
 def run():
     print("running microbescope...")
     Text(app, text="Running the Microbescope...")
+    start_time = datetime.datetime.now()
+    s_t = (start_time.minute + start_time.hour*60)*60+start_time.second
+    sample_interval = round(float(sample_frequency.value)*3600)
+    print(s_t)
+    print(sample_interval)
+    sleep(10)
     #sample = controls.Sample(sample_frequency.value, input_log_name.value, save_img_check.value, save_img_dir.value)
     #sample.sample_run()
+    end_time = datetime.datetime.now()
+    e_t = (end_time.hour*60 + end_time.minute)*60+end_time.second
+    print(e_t)
+    elapsed = e_t-s_t
+    print(elapsed)
+    print(sample_interval-elapsed)
+    sleep(sample_interval-elapsed)
+    run()
 
 
 # def stop():
@@ -42,7 +57,7 @@ def run():
 #logfile_name = "default"
 #sample_frequency = 24
 
-app = App(title="Hello world")
+app = App(title="Microbescope")
 welcome_message = Text(app, text="Welcome to the Microbescope", size=24, color="#0000FF")
 
 #Log File
@@ -50,12 +65,12 @@ outputfile_name = Text(app, text="Specify a name for log file:", size=10, color=
 input_log_name = TextBox(app, width=20)
 #Save Images
 save_img_check = CheckBox(app, text="Keep images?", grid=[1, 1], align="left")
-Text(app, "Specify image directory:", size=10, color="#000000")
+Text(app, "Specify save directory:", size=10, color="#000000")
 save_img_dir = TextBox(app, width=20, text="/home/pi/")
 #Sampling
-sample_freq_text = Text(app, text="Specify # samples per day:", size=10, color="#000000")
-sample_frequency = ButtonGroup(app, options=[["48", "48"], ["24", "24"], ["12", "12"], ["6", "6"], ["2", "2"]],
-                              selected="24", horizontal=True, grid=[1, 2], align="left")
+sample_freq_text = Text(app, text="Specify sample frequency:", size=10, color="#000000")
+sample_frequency = ButtonGroup(app, options=[["1min", "0.0167"],["30min", "0.5"], ["1hr", "1"], ["2hr", "2"], ["6hr", "6"], ["12hr", "12"]],
+                              selected="1", horizontal=True, grid=[1, 2], align="left")
 #Save Button
 save_button = PushButton(app, text="Save Settings?")
 save_button.bg = "#ff4b4b"

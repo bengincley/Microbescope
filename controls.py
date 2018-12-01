@@ -1,5 +1,6 @@
 from picamera import PiCamera
 import time
+import os
 import RPi.GPIO as GPIO
 import image_processing
 import datetime
@@ -58,16 +59,18 @@ class Sample:
         new_pic = im_capture()
         self.frames += 1
         self.microbe_count += image_processing.process_image(new_pic, size=30)
+        if  os.path.isabs(self.save_path) == False:
+            os.mkdirs(self.save_path)
         if self.save == True:
             imsave('%s%s.png' % (self.save_path, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")), new_pic)
 
     def log(self):
-        filename = '%slogfile.txt' % self.save_path
+        filename = '%slogfile.csv' % self.save_path
         file_object = open(filename, 'a')
         now = datetime.datetime.now()
-        now_string = now.strftime("%Y-%m-%d %H:%M:%S:%f")
+        now_string = now.strftime("%Y-%m-%d %H:%M:%S:%f,")
         file_object.write(now_string)
-        file_object.write(' - Result:%d microbes, ' % self.microbe_count + '\n')
+        file_object.write('Microbe count:,%d, ' % self.microbe_count + '\n')
         file_object.close()
 
     def sample_run(self):
