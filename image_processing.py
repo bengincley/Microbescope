@@ -34,15 +34,25 @@ def extract_patches(image, coordinates, size):
     """ Returns image patches centered coordinates input into function. Ensures patches are correct shape
     returns coordinates of patches
     """
-    patch = []
-    xy = []
-    for i in range(len(coordinates)):
-        square = image[int((coordinates[i, 1] - size / 2)):int((coordinates[i, 1] + size / 2)),
-                       int((coordinates[i, 0] - size / 2)):int((coordinates[i, 0] + size / 2))]
-        if square.shape == (size, size):
-            patch.append(square)
-            xy.append(coordinates[i])
-    return np.asarray(patch), np.asarray(xy)
+    # Deprecated for loop in exchange for logical -- needs revision?
+    # patch = []
+    # xy = []
+    x = coordinates[:, 0]
+    y = coordinates[:, 1]
+    n_events = len(coordinates)
+    radius = size / 2
+    patch = [
+        image[int(y[j] - radius):int([j] + radius), int(x[j] - radius):int(x[j] + radius)] for j
+        in range(n_events)]
+    patch = [x for x in patch if x.shape == (size, size)]
+    coordinates = [x for x in patch if x.shape == (size, size)]
+    # for i in range(len(coordinates)):
+    #     square = image[int((coordinates[i, 1] - size / 2)):int((coordinates[i, 1] + size / 2)),
+    #                    int((coordinates[i, 0] - size / 2)):int((coordinates[i, 0] + size / 2))]
+    #     if square.shape == (size, size):
+    #         patch.append(square)
+    #         xy.append(coordinates[i])
+    # return np.asarray(patch), np.asarray(xy)
 
 
 def sklearn_predict(patches):

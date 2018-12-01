@@ -8,41 +8,36 @@ import numpy as np
 from scipy.misc import imsave
 
 # Pin Setup:
-LED = 12  # LED pin number
 VALVE = 2  # Valve pin number
 valve_time = 2
 GPIO.setmode(GPIO.BCM)   # Broadcom pin-numbering scheme.
 GPIO.setwarnings(False)
-GPIO.setup(LED, GPIO.OUT)
 GPIO.setup(VALVE, GPIO.OUT)
-GPIO.output(LED, False)
 GPIO.output(VALVE, False)
 
 def calibrate_preview():
-    GPIO.output(LED, True)
     with PiCamera() as camera:
         camera.resolution = (1664, 1232)
         camera.awb_mode = 'off'
         camera.awb_gains = (1, 1)
         camera.framerate = 24
         time.sleep(30)
-    GPIO.output(LED, False)
 
-def im_capture():
-    GPIO.output(LED, True)
-    GPIO.output(VALVE, True)
-    time.sleep(valve_time)
-    GPIO.output(VALVE, False)
-    time.sleep(valve_time)
+
+def im_capture(bg):
+    if bg == False:
+        GPIO.output(VALVE, True)
+        time.sleep(valve_time)
+        GPIO.output(VALVE, False)
+        time.sleep(valve_time)
     with PiCamera() as camera:
         camera.resolution = (1664, 1232) 
         camera.awb_mode = 'off'
         camera.awb_gains = (1, 1)
         camera.framerate = 24
-        time.sleep(1)
-        output = np.empty((1232, 1664, 3), dtype=np.uint8) 
+        output = np.empty((1232, 1664, 3), dtype=np.uint8)
         camera.capture(output, 'rgb')
-    return np.mean(output, axis=2)
+    return output
 
 
 class Sample:
@@ -56,13 +51,22 @@ class Sample:
         self.save_im_path = save_images_path
 
     def add_pic(self):
-        new_pic = im_capture()
+        new_pic = im_capture(False) - self.bg_avg
         self.frames += 1
         self.microbe_count += image_processing.process_image(new_pic, size=30)
         if  os.path.isabs(self.save_path) == False:
             os.mkdirs(self.save_path)
         if self.save == True:
             imsave('%s%s.png' % (self.save_path, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")), new_pic)
+
+    def background_zero(self):
+        bg_array = []
+        for i in range(50):
+            bg_im = im_capture(True)
+            bg_array.append((bg_im))
+            time.sleep(0.1)
+        self.bg_avg = np.mean(bg_array, axis=0)
+
 
     def log(self):
         filename = '%slogfile.csv' % self.save_path
