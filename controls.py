@@ -64,8 +64,9 @@ class Sample:
         for i in range(50):
             bg_im = im_capture(True)
             bg_array.append((bg_im))
+            bg_array = np.mean(bg_array, axis=0)
             time.sleep(0.1)
-        self.bg_avg = np.mean(bg_array, axis=0)
+        self.bg_avg = bg_array
 
 
     def log(self):
