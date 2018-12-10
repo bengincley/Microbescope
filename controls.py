@@ -41,11 +41,13 @@ def im_capture(bg):
 
 
 class Sample:
-    def __init__(self, sample_frequency, save_path, save_images, save_images_path):
+    def __init__(self, sample_frequency, sample_volume, save_path, save_images, save_images_path):
         self.microbe_count = 0
         self.start_time = datetime.datetime.now()
         self.frames = 0
-        self.sample_time = sample_frequency
+        self.sampled_vol = 0
+        self.sample_volume = float(sample_volume)
+        self.sample_time = float(sample_frequency)
         self.save_path = save_path
         self.save = save_images
         self.save_im_path = save_images_path
@@ -70,7 +72,7 @@ class Sample:
 
 
     def log(self):
-        filename = '%slogfile.csv' % self.save_path
+        filename = '%s.csv' % self.save_path
         file_object = open(filename, 'a')
         now = datetime.datetime.now()
         now_string = now.strftime("%Y-%m-%d %H:%M:%S:%f,")
@@ -80,8 +82,9 @@ class Sample:
 
     def sample_run(self):
         loop_time = time.time()
-        while (time.time() - loop_time) < self.sample_time and self.microbe_count < 400:
+        while (time.time() - loop_time) < self.sample_time and self.microbe_count < 400 or self.sampled_vol < self.sample_volume:
             self.add_pic()
+            self.sampled_vol += 0.00896 #Sampled volume in uL
         while (time.time() - loop_time) < self.sample_time:
             time.sleep(0.1)
         self.log()
