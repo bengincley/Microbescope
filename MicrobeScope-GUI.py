@@ -19,6 +19,7 @@ def save_inputs():
 
 def reset():
     save_button.bg = "#ff4b4b"
+    save_button.text = "Save Settings?"
 
 
 def calibrate():
@@ -86,6 +87,7 @@ input_log_name.when_clicked = reset
 save_img_check.when_clicked = reset
 save_img_dir.when_clicked = reset
 sample_frequency.when_clicked = reset
+sample_volume_box.when_clicked = reset
 
 #Calibrate Button
 cal_button = PushButton(app, text="Calibrate MicrobeScope")
