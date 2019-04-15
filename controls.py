@@ -62,13 +62,12 @@ class Sample:
             imsave('%s%s.png' % (self.save_path, datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")), new_pic)
 
     def background_zero(self):
-        bg_array = []
+        bg_array = np.empty((0, 1232, 1640, 3))
         for i in range(50):
             bg_im = im_capture(True)
-            bg_array.append((bg_im))
-            bg_array = np.mean(bg_array, axis=0)
+            bg_array.append((bg_im), axis=0)
             time.sleep(0.1)
-        self.bg_avg = bg_array
+        self.bg_avg = np.mean(bg_array, axis=0)
 
 
     def log(self):
