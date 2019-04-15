@@ -1,10 +1,15 @@
+"""Sets up a GUI for running the MicrobeScope main program. Highest
+level of abstraction
+Written by Ben Gincley and Zach Flinkstrom"""
 from guizero import App, Text, TextBox, PushButton, CheckBox, ButtonGroup
 from time import sleep
 import datetime
-#import controls
+import controls
+import time
 
 
 def save_inputs():
+    '''Saves user input values'''
     print(input_log_name.value)
     print(save_img_check.value)
     print(save_img_dir.value)
@@ -23,43 +28,35 @@ def reset():
 
 
 def calibrate():
+    '''Opens a preview window allowing user to focus camera'''
     print("calibrating microbescope...")
-    #controls.calibrate_preview()
-
+    background = controls.calibrate_preview()
+    return background
 
 def run():
+    '''Calls controls module to actually run the device
+    ie cycle valve, take image, and process'''
     print("running microbescope...")
     Text(app, text="Running the MicrobeScope...")
     start_time = datetime.datetime.now()
-    s_t = (start_time.minute + start_time.hour*60)*60+start_time.second
-    sample_interval = round(float(sample_frequency.value)*3600)
-    print(s_t)
-    print(sample_interval)
-    sleep(10)
-    #sample = controls.Sample(sample_frequency.value, sample_volume.value, input_log_name.value, save_img_check.value, save_img_dir.value)
-    #sample.sample_run()
+    s_t = time.time()
+    sample_interval = float(sample_frequency.value)
+    print("Start Time: %s" % s_t)
+    print("Sample Interval: %s seconds" % sample_interval)
+    sleep(1)
+    background = calibrate()
+    s_t = time.time()
+    sample = controls.Sample(sample_interval, sample_volume.value,
+                             input_log_name.value, save_img_check.value,
+                             save_img_dir.value, background)
+    sample.sample_run()
     end_time = datetime.datetime.now()
-    e_t = (end_time.hour*60 + end_time.minute)*60+end_time.second
-    print(e_t)
-    elapsed = e_t-s_t
-    print(elapsed)
-    print(sample_interval-elapsed)
-    sleep(sample_interval-elapsed)
+    e_t = time.time()
+    print("End Time: %s" % e_t)
     run()
 
 
-# def stop():
-#     print("stopping microbescope...")
-#     Text(app, text="Stopping the Microbescope")
-#     global governor
-#     governor = False
-#     # Stop program
-
-
-#Initialize
-#logfile_name = "default"
-#sample_frequency = 24
-
+'''Lays out the GUI that pops up'''
 app = App(title="MicrobeScope")
 welcome_message = Text(app, text="Welcome to the MicrobeScope", size=24, color="#0000FF")
 
@@ -72,10 +69,9 @@ Text(app, "Specify save directory:", size=10, color="#000000")
 save_img_dir = TextBox(app, width=20, text="/home/pi/")
 #Sampling
 sample_freq_text = Text(app, text="Specify sample frequency:", size=10, color="#000000")
-sample_frequency = ButtonGroup(app, options=[["1min", "0.0167"],["30min", "0.5"], ["1hr", "1"], ["2hr", "2"], ["6hr", "6"], ["12hr", "12"]],
+sample_frequency = ButtonGroup(app, options=[["1min", "60"],["30min", "1800"], ["1hr", "3600"], ["2hr", "7200"], ["6hr", "21600"], ["12hr", "43200"]],
                               selected="1", horizontal=True, grid=[1, 2], align="left")
 #Sample Volume
-#Log File
 sample_volume_box = Text(app, text="Specify sample volume (uL):", size=10, color="#000000")
 sample_volume = TextBox(app, width=3, text="1")
 
@@ -100,12 +96,5 @@ run_button.when_clicked = run
 #Stop Button
 Text(app, "To stop, enter Ctrl+C in the command line.", size=12, color="#000000")
 
-# stop_button = PushButton(app, text="Stop Microbescope")
-# stop_button.when_clicked = stop
-
 app.display()
-# Start Calibration
-# Save images to file?
-# Name for output log file
-# Sample frequency - how many samples per day
-# Run now
+
